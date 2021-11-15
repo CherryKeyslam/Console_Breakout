@@ -1,3 +1,2 @@
-# C-Console-Ping-Pong
-
+# C# Console Ping Pong
 Not yet finished.
