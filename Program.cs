@@ -1,127 +1,38 @@
-// C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe /t:exe /out:pong.exe pong.cs
+// C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe /t:exe /out:atari.exe atari.cs
 
 using System;
 
-namespace Ping_Pong
-{
-    class Program
-    {
-        public static int width = 119;
-        public static int height = 29;
-        public static bool notended = true;
-        public static string[,] matrix = new string[height, width];
+namespace Breakout {
+
+	class Program {
+
+	public static int width = 119;
+        public static int height = 30;
+        public static bool running = true;
+        public static char[,] matrix = new char[height, width];
+        private static readonly object guard = new object();
+
+        public static char fill = '█';
+
         static void Main(string[] args)
         {
-            for (int i = 0; i < height; i++)
+        	Console.CursorVisible = false;
+
+        	for (int i = 0; i < height; i++)
             {
                 for (int y = 0; y < width; y++)
                 {
-                    matrix[i, y] = " ";
+                    matrix[i, y] = ' ';
                 }
             }
 
-            for (int i = 0; i < 8; i++)
+            for (int i = (0 + 50); i < (17 + 50); i++)
             {
-                matrix[i, 0] = "█";
+                matrix[(height - 1), i] = fill;
+                //█
             }
 
-            for (int i = 0; i < height; i++)
-            {
-                matrix[i, (width - 1)] = "░";
-            }
-
-            
-            System.Threading.Thread keyReader = new System.Threading.Thread(Program.Input);
-            keyReader.Start();
-
-            System.Threading.Thread ball = new System.Threading.Thread(Program.Ball);
-            ball.Start();
-
-            while (notended)
-            {
-                Console.Clear();
-                display();
-                System.Threading.Thread.Sleep(500);
-            }
-            Console.ReadKey();
-        }
-
-        //-----------------------------------------------------------------------------
-
-        public static void Ball() {
-        	int x = width / 2;
-        	int y = height / 2;
-
-        	int forceX = 0;
-        	int forceY = 0;
-        	int angle = 1;
-        	int updown = -1;
-			int store = 0;
-			int direction = -1;
-
-        	while(true) {
-        		matrix[y,x] = " ";
-
-
-        		if((x + forceX) < 0) {
-        			notended = false;
-        		} else if((x + forceX) > (width - 1)) {
-        			direction *= 1;
-        		} else {
-	        		switch(matrix[y,x + forceX]) {
-	        			case "█":
-	        				direction *= -1;
-	        			break;
-
-	        			case "░":
-	        				matrix[y,x + forceX] = " ";
-	        				direction *= -1;
-	        			break;
-	        		}
-        		}
-
-        		if((y + forceY) < 0 || (y + forceY) > (height - 1)) {
-        			store = 0;
-        			updown *= -1;
-        		} else {
-	        		switch(matrix[y + forceY, x]) {
-	        			case "█":
-	        				direction *= -1;
-	        			break;
-
-	        			case "░":
-	        				matrix[y + forceY, x] = " ";
-	        				updown *= -1;
-	        			break;
-	        		}
-        		}
-        		
-        		if(Math.Abs(store) > 0) {
-					forceY = updown;
-					forceX = 0;
-					if(store == (angle*updown)) {
-						store = 0;
-					} else {
-						store += updown;
-					}
-				} else {
-					forceX = direction;
-					forceY = 0;
-					store += updown;
-				}
-
-        		x = x + forceX;
-        		y = y + forceY;
-	        	matrix[y, x] = "O";
-	        	System.Threading.Thread.Sleep(200);
-        	}
-        }
-
-        //-----------------------------------------------------------------------------
-
-        public static void display()
-        {
-        	string compiled = "";
+            string compiled = "";
             for (int i = 0; i < height; i++)
             {
                 string line = "";
@@ -129,23 +40,53 @@ namespace Ping_Pong
                 {
                     line += matrix[i, y];
                 }
-                compiled += line + "\n";
+                compiled += line + '\n';
             }
             Console.WriteLine(compiled);
+
+            int[] colours = {12,6,6,14,10,1};
+            for(int i = 0; i < 6; i++) {
+            	for(int x = 0; x < width; x++) {
+            		Console.SetCursorPosition(x,i + 5);
+            		Console.ForegroundColor = (ConsoleColor)colours[i];
+            		Console.Write('█');
+            		matrix[i + 5,x] = '░';
+            	}
+            }
+
+            Console.ForegroundColor = ConsoleColor.Gray;
+
+            Console.SetCursorPosition(0,0);
+
+            System.Threading.Thread keyReader = new System.Threading.Thread(Program.Input);
+            keyReader.Start();
+
+            System.Threading.Thread ball = new System.Threading.Thread(Program.Ball);
+            ball.Start();
+
+        	while(true) { Console.ReadKey(true); };
+		}
+
+		public static void display(int x, int y, char z) {
+        	lock(guard) {
+	        	matrix[y,x] = z;
+	        	Console.SetCursorPosition(x,y);
+	            Console.Write(z);
+        	}
         }
 
         public static void Input() {
         	    Controller controller = new Controller();
             	string key = "na";
 
-            	while(true) {
+            	while(running) {
 	                switch (Console.ReadKey(true).Key)
 	                {
-	                    case ConsoleKey.UpArrow:
+	                    case ConsoleKey.LeftArrow:
 	                        key = "up";
 	                        break;
 
-	                    case ConsoleKey.DownArrow:
+	                    case ConsoleKey.RightArrow:
 	                        key = "dn";
 	                        break;
 
@@ -157,10 +98,11 @@ namespace Ping_Pong
             	}
         }
 
-        public class Controller
+		public class Controller
         {
-            int start = 0;
-            int end = 7;
+            int start = 0 + 50;
+            int end = 16 + 50;
+            int flr = height - 1;
 
             public void Update(string key)
             {
@@ -171,24 +113,175 @@ namespace Ping_Pong
                         {
                             return;
                         }
-                        matrix[end, 0] = " ";
-                        matrix[(start - 1), 0] = "█";
+                        display(end, flr , ' ');
+                        display((start - 1), flr, fill);
                         start--;
                         end--;
                     break;
 
                     case "dn":
-                        if ((end + 1) > (height-1))
+                        if ((end + 1) > (width-1))
                         {
                             return;
                         }
-                        matrix[start, 0] = " ";
-                        matrix[(end + 1), 0] = "█";
+                        display(start, flr, ' ');
+                        display((end + 1),flr, fill);
                         start++;
                         end++;
                     break;
                 }
             }
         }
-    }
+        
+        public static void Ball() {
+        	int x = width / 2;
+        	int y = height / 2;
+
+        	int angle = 1;
+        	int riglef = 1;
+			int store = 0;
+			int direction = -1;
+			bool victory = false;
+
+			int speed = 150;
+
+        	int forceX = direction;
+        	int forceY = riglef;
+
+        	System.Collections.Generic.Dictionary<int,int> lookup = new System.Collections.Generic.Dictionary<int,int>() {
+				{0,0},
+				{1,0},
+				{2,1},
+				{3,1},
+				{4,1},
+				{5,1},
+				{6,1},
+				{7,2},
+				{8,2},
+			};
+
+        	while(running) {
+
+        		display(x, y, ' ');
+
+        		if(((x + forceX) < 0) || (x + forceX) > (width - 1)) {
+        			riglef *= -1;
+        		} else {
+	        		switch(matrix[y,(x + forceX)]) {
+	        			case '█':
+	        				riglef *= -1;
+
+	        			break;
+
+	        			case '░':
+	        				//matrix[y,x + forceX] = ' ';
+	        				display((x + forceX), y, ' ');
+	        				riglef *= -1;
+	        			break;
+	        		}
+        		}
+
+        		if((y + forceY) > (height - 1)) {
+        			running = false;
+        			break;
+        		} else if((y + forceY) < 0) {
+        			store = 0;
+        			direction *= -1;
+        		} else {
+	        		switch(matrix[y + forceY, x]) {
+	        			case '█':
+	        				float dep = 0f;
+	        				bool walking = true;
+	        				while(walking) {
+	        					if((x + (int)dep) > (width - 1)) {
+	        						walking = false;
+	        					}
+	        					else if(matrix[(y + forceY) , (x + (int)dep)] == '█') {
+	        						dep += 1f;
+	        					} else {
+	        						walking = false;
+	        					}
+	        				}
+
+	        				int centreDist = Math.Abs((int)((17f - dep) - 8f));
+
+	        				angle = lookup[centreDist];
+
+	        				if(angle == 0) {
+	        					riglef = 0;
+	        					speed = 50;
+	        				} else {
+
+	        					if(angle == 1) {
+	        						speed = 150;
+	        					} else {
+	        						speed = 100;
+	        					}
+	        					if(dep < 9) {
+	        						riglef = 1;
+	        					} else {
+	        						riglef = -1;
+	        					}
+	        				}
+
+	        				store = 0;
+	        				direction *= -1;
+	        			break;
+
+	        			case '░':
+	        				display(x, (y + forceY), ' ');
+	        				store = 0;
+	        				direction *= -1;
+	        			break;
+	        		}
+        		}
+        		
+        		//Angle-inator:
+
+        		if(store == (angle*riglef)) {
+					store = 0;
+				}
+				if(Math.Abs(store) > 0) {
+					forceX = riglef;
+					forceY = 0;
+					store += riglef;
+				} else {
+					forceY = direction;
+					forceX = riglef;
+					store += riglef;
+				}
+
+        		x = x + forceX;
+        		y = y + forceY;
+	        	display(x, y, 'O');
+	        	System.Threading.Thread.Sleep(speed);
+        	}
+
+        	switch(victory) {
+        		case false:
+        			Console.Clear();
+        			Console.SetCursorPosition(0,0);
+        			string losing_text = @"
+
+
+
+
+
+
+
+
+                    ██╗   ██╗ █████╗ ██╗   ██╗                ██╗      █████╗  ██████╗████████╗██╗
+                    ╚██╗ ██╔╝██╔══██╗██║   ██║                ██║     ██╔══██╗██╔════╝╚══██╔══╝██║
+                     ╚████╔╝ ██║  ██║██║   ██║                ██║     ██║  ██║╚█████╗    ██║   ██║
+                      ╚██╔╝  ██║  ██║██║   ██║                ██║     ██║  ██║ ╚═══██╗   ██║   ╚═╝
+                       ██║   ╚█████╔╝╚██████╔╝                ███████╗╚█████╔╝██████╔╝   ██║   ██╗
+                       ╚═╝    ╚════╝  ╚═════╝                 ╚══════╝ ╚════╝ ╚═════╝    ╚═╝   ╚═╝
+        			";
+					Console.SetCursorPosition(0,0);
+					Console.WriteLine(losing_text);
+        		break;
+
+        	}
+        }
+	}
 }
