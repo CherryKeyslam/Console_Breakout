@@ -1,6 +1,5 @@
-# C# Console Atari Breakout 2600
+# C# Console Atari Breakout
 
-Still pending. But here is a screenshot showing the progress:
+Done! (Ignores all the bugs and the differences in the original game and mine.)
 
-
-![Screenshot (13)](https://user-images.githubusercontent.com/85491783/143203601-8a405d0a-a659-450a-8a5d-8332881409d4.png)
+The title is as self explanatory as can be. It's the Atari Breakout (Arcade) remade in the console!
