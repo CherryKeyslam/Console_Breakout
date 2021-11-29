@@ -1,6 +1,7 @@
-/// C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe /t:exe /out:atari.exe atari.cs
+// C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe /t:exe /out:atari.exe atari.cs
 
 using System;
+using System.Linq;
 
 namespace Breakout {
 
@@ -95,7 +96,10 @@ namespace Breakout {
             // Controller: 
 
             while(running) {
-            	switch (Console.ReadKey(true).Key)
+
+            	var input = Console.ReadKey(true).Key;
+
+            	switch (input)
 	                {
 	                    case ConsoleKey.LeftArrow:
 	                        if((start - 1) < 0)
@@ -103,7 +107,8 @@ namespace Breakout {
                             	continue;
                         	}
 	                        display(end, flr, ' ');
-	                        display((start - 1), flr, '█');
+	                        matrix[flr, (start - 1)] = '█';
+	                        // display((start - 1), flr, '█');
 	                        start--;
 	                        end--;
 	                    break;
@@ -114,11 +119,18 @@ namespace Breakout {
 	                            continue;
 	                        }
 	                        display(start, flr, ' ');
-	                        display((end + 1),flr, '█');
+	                        matrix[flr,(end + 1)] = '█';
+	                        // display((end + 1),flr, '█');
 	                        start++;
 	                        end++;
 	                    break;
 	                }
+	                lock(guard) {
+			        	Console.SetCursorPosition(start,flr);
+			            Console.Write("███████████████");
+			            // To fix blue line glitch:
+			            Console.SetCursorPosition(0,30);
+			        }
             }
 
         	while(true) { Console.ReadKey(true); };
@@ -155,6 +167,8 @@ namespace Breakout {
 		}
         
         public static void Ball() {
+
+        	char[] non_break = {' ', '█'};
         	int score = 0;
 
         	for(int turns = 0; turns < 3; turns++) {
@@ -170,6 +184,9 @@ namespace Breakout {
 				int direction = 1;
 
 				int speed = 50;
+				int prespeed1 = 50;
+				int prespeed2 = 60;
+				int prespeed3 = 55;
 
 	        	int forceX = direction;
 	        	int forceY = riglef;
@@ -201,19 +218,24 @@ namespace Breakout {
 	        		
 	        		// This giant if condition checks that the next move is not out of bounds and if the ball is in a corner or on a diagonal.
 
-	        		if(!(((x + forceX) < 0) || ((x + forceX) == width) || ((y + forceY) < 0) || ((y + forceY) == height)) && (((matrix[y + forceY,x + forceX] != ' ') && (matrix[y,x + forceX] != ' ') && (matrix[y + forceY,x] != ' ') || ((matrix[y,x + forceX] == ' ') && (matrix[y + forceY,x] == ' ') && (matrix[y + forceY,x + forceX] != ' '))))) {
+	        		if(!(((x + forceX) < 0) || ((x + forceX) == width) || ((y + forceY) < 0) || ((y + forceY) == height)) && (((matrix[y + forceY,x + forceX] != ' ') && (matrix[y,x + forceX] != ' ') && (matrix[y + forceY,x] != ' ') || ((matrix[y,x + forceX] == ' ') && (matrix[y + forceY,x] == ' ') && (non_break.All(s => matrix[y + forceY,x + forceX] != s)))))) {
 	        			riglef *= -1;
 	        			direction *= -1;
 	        			store = 0;
 
 	        			if((matrix[(y + forceY),(x + forceX)] != ' ') && ((matrix[y,(x + forceX)] != ' ') && (matrix[(y + forceY),x] != ' '))) {
 	        				DeleteBlock((x + forceX),y);
+	        				score += score_lookup[y];
 
 	    					DeleteBlock(x,(y + forceY));
+	    					score += score_lookup[y + forceY];
 
 	    					DeleteBlock((x + forceX),(y + forceY));
+	    					score += score_lookup[y + forceY];
+
 	        			} else {
 	        				DeleteBlock((x + forceX),(y + forceY));
+	        				score += score_lookup[y + forceY];
 	        			}
 
 
@@ -223,10 +245,8 @@ namespace Breakout {
 		        		} else {
 			        		switch(matrix[y,(x + forceX)]) {
 			        			case '█':
-			        				angle = 3;
-			        				store = 0;
-			        				direction = -1;
 			        				riglef *= -1;
+			        				store = 0;
 
 			        			break;
 
@@ -245,7 +265,7 @@ namespace Breakout {
 			        		}
 		        		}
 
-		        		if((y + forceY) == height && direction != -1) {
+		        		if((y + forceY) == height) {
 		        			break;
 		        		} else if((y + forceY) < 1) {
 		        			store = 0;
@@ -272,13 +292,13 @@ namespace Breakout {
 
 			        				if(angle == 0) {
 			        					riglef = 0;
-			        					speed = 50;
+			        					speed = prespeed1;
 			        				} else {
 
 			        					if(angle == 1) {
-			        						speed = 80;
+			        						speed = prespeed2;
 			        					} else {
-			        						speed = 50;
+			        						speed = prespeed3;
 			        					}
 			        					if(dep < 8) {
 			        						riglef = 1;
@@ -295,6 +315,13 @@ namespace Breakout {
 			        			case '▒':
 
 			        				score += score_lookup[y + forceY];
+
+			        				if(score_lookup[y + forceY] == 7) {
+			        					prespeed1 = 30;
+			        					prespeed2 = 40;
+			        					prespeed3 = 35;
+			        					speed = 40;
+			        				}
 
 			        				DeleteBlock(x,(y + forceY));
 
@@ -330,8 +357,15 @@ namespace Breakout {
 
 	        running = false;
 
-			Console.Clear();
+	        // This may look messy but it at least works in it's purpose:
+
 			Console.SetCursorPosition(0,0);
+			Console.Clear();
+
+	        System.Threading.Thread.Sleep(1000);
+
+	        Console.SetCursorPosition(0,0);
+			Console.Clear();
 			string losing_text = @"
 
 
