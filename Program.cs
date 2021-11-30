@@ -15,11 +15,11 @@ namespace Breakout {
 
         static void Main(string[] args)
         {
-        	Console.CursorVisible = false;
+            Console.CursorVisible = false;
 
-        	Console.SetWindowSize(Console.WindowWidth + 1, Console.WindowHeight);
+            Console.SetWindowSize(Console.WindowWidth + 1, Console.WindowHeight);
 
-        	for (int i = 0; i < height; i++)
+            for (int i = 0; i < height; i++)
             {
                 for (int y = 0; y < width; y++)
                 {
