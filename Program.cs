@@ -7,7 +7,7 @@ namespace Breakout {
 
 	class Program {
 
-		public static int width = 120;
+	public static int width = 120;
         public static int height = 31;
         public static bool running = true;
         public static char[,] matrix = new char[height, width];
