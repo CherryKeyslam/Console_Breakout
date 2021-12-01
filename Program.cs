@@ -2,12 +2,13 @@
 
 using System;
 using System.Linq;
+using System.Threading;
 
 namespace Breakout {
 
 	class Program {
 
-	public static int width = 120;
+		public static int width = 120;
         public static int height = 31;
         public static bool running = true;
         public static char[,] matrix = new char[height, width];
@@ -15,11 +16,11 @@ namespace Breakout {
 
         static void Main(string[] args)
         {
-            Console.CursorVisible = false;
+        	Console.CursorVisible = false;
 
-            Console.SetWindowSize(Console.WindowWidth + 1, Console.WindowHeight);
+        	Console.SetWindowSize(Console.WindowWidth + 1, Console.WindowHeight);
 
-            for (int i = 0; i < height; i++)
+        	for (int i = 0; i < height; i++)
             {
                 for (int y = 0; y < width; y++)
                 {
@@ -86,7 +87,7 @@ namespace Breakout {
 
             Console.SetCursorPosition(0,0);
 
-            System.Threading.Thread ball = new System.Threading.Thread(Program.Ball);
+            Thread ball = new Thread(Program.Ball);
             ball.Start();
 
             int start = 0 + 53;
@@ -210,7 +211,7 @@ namespace Breakout {
 					{8,2}
 				};
 
-				System.Threading.Thread.Sleep(1500);
+				Thread.Sleep(1500);
 
 	        	while(running) {
 
@@ -351,7 +352,7 @@ namespace Breakout {
 	        		y = y + forceY;
 		        	display(x, y, 'O');
 
-		        	System.Threading.Thread.Sleep(speed);
+		        	Thread.Sleep(speed);
 	        	}
 	        }
 
@@ -362,7 +363,7 @@ namespace Breakout {
 			Console.SetCursorPosition(0,0);
 			Console.Clear();
 
-	        System.Threading.Thread.Sleep(1000);
+	        Thread.Sleep(1000);
 
 	        Console.SetCursorPosition(0,0);
 			Console.Clear();
